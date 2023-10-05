@@ -8,7 +8,6 @@ class Connection:
     def __init__(self, dut):
         self.dut = dut
         # Init interface
-        print (dut.apb.m.penable, dut.apb.s.pready)
         self.apb = ApbMaster(dut.apb, name=None, clock=dut.clk)
 
 @cocotb.test()

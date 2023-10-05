@@ -1,0 +1,8 @@
+files:
+  - ${PROJECT_HOME}/src/modules-common/rtl/sv/interfaces/artec_interfaces.sv
+  - tb.sv
+  - glbl.v
+  - pytest/apb_template_seq.py:
+      filetype : pythonSource
+  - ${PROJECT_HOME}/src/modules-common/tb.yaml:
+      filetype : 'filelist'

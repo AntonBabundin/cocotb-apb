@@ -1,0 +1,5 @@
+files:
+  - ${PROJECT_HOME}/src/modules-common/verif_lib/apb_testbench_template/rtl.yaml:
+      filetype : filelist
+  - tb.yaml:
+      filetype : 'filelist'

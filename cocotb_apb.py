@@ -1,14 +1,14 @@
 import cocotb
-from cocotb.triggers import RisingEdge, ReadOnly, NextTimeStep, FallingEdge
+import logging
+from cocotb.triggers import RisingEdge
 from cocotb_bus.drivers import BusDriver
-import numpy as np
 
 class ApbMaster(BusDriver):
 
-    _signals = ["psel","pwrite", "pstrb", "pwdata", "paddr", "pready", "penable", "prdata"]
-
-    def __init__(self, entity, name, clock, **kwargs):
-        BusDriver.__init__(self,entity,name,clock,**kwargs)
+    _signals = ["psel","pwrite", "strb", "pwdata", "paddr",
+            "penable", "pready", "prdata"]
+    def __init__(self, entity, name, clock):
+        super().__init__(self, entity, name, clock)
 
         self.bus.psel.setimmediatevalue(0)
         self.bus.pwrite.setimmediatevalue(0)
@@ -41,7 +41,7 @@ class ApbMaster(BusDriver):
         self.bus.pstrb.value = 0
 
         if verbose:
-            self.log.info("Register is written with address 0x{:08x} and data 0x{:08x}".format(addr,data))
+            logging.critical(f"Address = {hex(addr)},  data  = {hex(data)}")
 
     async def read(self,addr,verbose=False):
         await RisingEdge(self.clock)
@@ -64,7 +64,7 @@ class ApbMaster(BusDriver):
         tmp = self.bus.prdata.value
 
         if verbose:
-            self.log.info("Register is read with address 0x{:08x} and data 0x{:08x}".format(addr,int(tmp)))
+            logging.critical(f"Address = {hex(addr)},  data  = {hex(data)}")
 
         self.bus.psel.value = 0
         self.bus.penable.value = 0
@@ -73,41 +73,41 @@ class ApbMaster(BusDriver):
         self.bus.paddr.value = 0
         self.bus.pstrb.value = 0
 
-        return tmp
+        return tmp.integer
 
-class ApbSlave(BusDriver):
+# class ApbSlave(BusDriver):
 
-    _signals = ["pready","prdata","penable","psel"]
+#     _signals = ["pready","prdata","penable","psel"]
 
-    def __init__(self, entity, name, clock, size=4, offset=0, **kwargs):
+#     def __init__(self, entity, name, clock, size=4, offset=0, **kwargs):
 
-        BusDriver.__init__(self,entity,name,clock,**kwargs)
-        self.bus.pready.setimmediatevalue(1)
-        self.bus.prdata.setimmediatevalue(0)
+#         BusDriver.__init__(self,entity,name,clock,**kwargs)
+#         self.bus.pready.setimmediatevalue(1)
+#         self.bus.prdata.setimmediatevalue(0)
 
-        self.memory = np.zeros(size//4, dtype=int)
-        self.offset = offset
+#         self.memory = np.zeros(size//4, dtype=int)
+#         self.offset = offset
 
-        cocotb.fork(self.wait())
+#         cocotb.fork(self.wait())
 
-    async def wait(self):
-        while True:
-            await FallingEdge(self.clock)
-            await ReadOnly()
-            if self.bus.penable.value and self.bus.psel.value and self.bus.s.pready.value:
+#     async def wait(self):
+#         while True:
+#             await FallingEdge(self.clock)
+#             await ReadOnly()
+#             if self.bus.penable.value and self.bus.psel.value and self.bus.s.pready.value:
                 
-                addr = (int(self.bus.paddr) - self.offset)//4
-                data = int(self.bus.pwdata)
-                if (self.bus.pwrite.value):
-                    self.write(addr,data)
-                else:
-                    await self.read(addr)
+#                 addr = (int(self.bus.paddr) - self.offset)//4
+#                 data = int(self.bus.pwdata)
+#                 if (self.bus.pwrite.value):
+#                     self.write(addr,data)
+#                 else:
+#                     await self.read(addr)
         
-    def write(self,addr,data):
-        self.log.info("Memory write: %x %x",addr,data)
-        self.memory[addr] = data
+#     def write(self,addr,data):
+#         self.log.info("Memory write: %x %x",addr,data)
+#         self.memory[addr] = data
 
-    async def read(self,addr):
-        self.log.info("Memory read: %x %x",addr,self.memory[addr])
-        await NextTimeStep()
-        self.bus.prdata <= int(self.memory[addr])
+#     async def read(self,addr):
+#         self.log.info("Memory read: %x %x",addr,self.memory[addr])
+#         await NextTimeStep()
+#         self.bus.prdata <= int(self.memory[addr])
